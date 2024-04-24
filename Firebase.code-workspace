@@ -1,0 +1,19 @@
+{
+	"folders": [
+		{
+			"path": "../Firebase"
+		},
+		{
+			"path": "."
+		},
+		{
+			"path": "../New Javascript"
+		},
+		{
+			"path": "../Web Level 1"
+		}
+	],
+	"settings": {
+		"liveServer.settings.multiRootWorkspaceName": "Javascript"
+	}
+}

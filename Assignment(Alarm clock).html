@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Alarm Clock</title>
+  <style>
+    body {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+      background-image: linear-gradient(to right, #d8a12b 30%, #ab2ec4 70%);
+    }
+
+    .card {
+      background-image: linear-gradient(to right, #794de0 30%, #a8c42e 70%);
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 4px 8px rgba(104, 97, 97, 0.1);
+      text-align: center;
+      width: 300px;
+      height: auto;
+    }
+
+    h1 {
+      color: #333;
+    }
+
+    #clock {
+      font-size: 32px;
+      margin-bottom: 20px;
+    }
+
+    #alarmTime {
+      margin-bottom: 20px;
+    }
+
+    #status {
+      margin-top: 20px;
+      font-weight: bold;
+      color: green;
+      font-size: 24px;
+    }
+
+    #controls {
+      margin-top: 20px;
+    }
+
+    .button {
+      padding: 10px 20px;
+      font-size: 16px;
+      background-color: #4CAF50;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      transition: background-color 0.3s;
+    }
+
+    .button:hover {
+      background-color: #45a049;
+    }
+
+    #alarmsContainer {
+      margin-top: 20px;
+      background-color: #f9f9f9;
+      padding: 10px;
+      border-radius: 5px;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+
+    .alarm-item {
+      margin-bottom: 10px;
+    }
+
+    .alarm-item button {
+      margin-left: 10px;
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="container">
+      <h1>Alarm Clock</h1>
+      <div class="clock-container">
+        <div id="clock"></div>
+      </div>
+      <div class="input-container">
+        <input type="time" id="alarmTime">
+      </div>
+      <div id="controls" class="button-container">
+        <button class="button" onclick="setAlarm()">Set Alarm</button>
+        <button class="button" onclick="stopAlarm()" id="stopButton" style="display: none;">Stop</button>
+      </div>
+      <div id="status">Ready</div>
+      <div id="alarmsContainer">
+        <ul id="alarms"></ul>
+      </div>
+    </div>
+  </div>
+  <audio src="../../Music/DJ-Khalipha---Mara-Pass-Mara-Beat.mp3" id="alarmSound"></audio>
+
+  <script>
+    let alarmInterval;
+
+    function updateClock() {
+      const now = new Date();
+      const hours = ('0' + now.getHours()).slice(-2);
+      const minutes = ('0' + now.getMinutes()).slice(-2);
+      const seconds = ('0' + now.getSeconds()).slice(-2);
+      document.getElementById('clock').innerText = `${hours}:${minutes}:${seconds}`;
+    }
+
+    setInterval(updateClock, 1000);
+
+    const storedAlarms = JSON.parse(localStorage.getItem('alarms')) || [];
+
+    function displayAlarms() {
+      const alarmsList = document.getElementById('alarms');
+      alarmsList.innerHTML = '';
+
+      storedAlarms.forEach(alarm => {
+        const listItem = document.createElement('div');
+        listItem.className = 'alarm-item';
+        listItem.innerText = alarm;
+        
+        const editButton = document.createElement('button');
+        editButton.innerText = 'Edit';
+        editButton.addEventListener('click', () => editAlarm(alarm));
+        
+        const deleteButton = document.createElement('button');
+        deleteButton.innerText = 'Delete';
+        deleteButton.addEventListener('click', () => deleteAlarm(alarm));
+
+        listItem.appendChild(editButton);
+        listItem.appendChild(deleteButton);
+
+        alarmsList.appendChild(listItem);
+      });
+    }
+
+    displayAlarms();
+
+    function setAlarm() {
+      const alarmTime = document.getElementById('alarmTime').value;
+
+      storedAlarms.push(alarmTime);
+      localStorage.setItem('alarms', JSON.stringify(storedAlarms));
+
+      document.getElementById('status').innerText = `Alarm set for ${alarmTime}`;
+      document.getElementById('status').style.color = 'green';
+
+      displayAlarms();
+
+      // Clear any existing interval
+      clearInterval(alarmInterval);
+
+      // Call checkTime once after setting the alarm
+      alarmInterval = setInterval(checkTime, 1000);
+
+      // Show stop button
+      document.getElementById('stopButton').style.display = 'inline';
+    }
+
+    function triggerAlarm() {
+      const alarmSound = document.getElementById('alarmSound');
+      alarmSound.loop = true; // Set audio to loop continuously
+      alarmSound.play();
+      document.getElementById('status').innerText = 'Wake up!';
+      document.getElementById('status').style.color = 'red';
+      document.getElementById('status').style.fontSize = '30px'; // Increase font size
+    }
+
+    function stopAlarm() {
+      const alarmSound = document.getElementById('alarmSound');
+      alarmSound.pause();
+      alarmSound.currentTime = 0; // Reset audio to the beginning
+      document.getElementById('status').innerText = 'Alarm stopped';
+      document.getElementById('status').style.color = 'black';
+      document.getElementById('status').style.fontSize = '24px'; // Reset font size
+      clearInterval(alarmInterval); // Stop the interval
+      document.getElementById('stopButton').style.display = 'none'; // Hide stop button
+    }
+
+    function checkTime() {
+      const now = new Date();
+      const currentTime = now.getHours() + ':' + ('0' + now.getMinutes()).slice(-2);
+
+      storedAlarms.forEach(alarmTime => {
+        const formattedAlarmTime = alarmTime.substring(0, 5); // Extract HH:MM part
+
+        if (currentTime === formattedAlarmTime) {
+          triggerAlarm();
+        }
+      });
+    }
+
+    function editAlarm(alarmTime) {
+      const newTime = prompt('Enter the new time for the alarm:', alarmTime);
+      if (newTime !== null) {
+        const index = storedAlarms.indexOf(alarmTime);
+        storedAlarms[index] = newTime;
+        localStorage.setItem('alarms', JSON.stringify(storedAlarms));
+        displayAlarms();
+      }
+    }
+
+    function deleteAlarm(alarmTime) {
+      const index = storedAlarms.indexOf(alarmTime);
+      storedAlarms.splice(index, 1);
+      localStorage.setItem('alarms', JSON.stringify(storedAlarms));
+      displayAlarms();
+    }
+  </script>
+</body>
+</html>
